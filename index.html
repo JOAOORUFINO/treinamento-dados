@@ -184,6 +184,8 @@ footer{
 .ed-check{flex-direction:row!important;align-items:center;gap:8px!important;font-size:12px!important;color:var(--text)!important;margin:10px 0}
 .ed-check input{width:auto!important}
 .ed-gh .ed-btn{margin-top:4px}
+.ed-adv{border-top:1px dashed var(--border);margin-top:12px}
+.ed-adv summary{cursor:pointer;font-size:11px;font-weight:600;color:var(--text-soft);padding:8px 0}
 </style>
 </head>
 <body>
@@ -211,8 +213,8 @@ footer{
    ================================================================== */
 /*==CONFIG_START==*/
 const CONFIG = {
-  "titulo": "Treinamento - Dados",
-  "rodape": "Uso interno · Time Dados"
+  titulo: "Treinamento - Dados",   // aparece só na aba do navegador
+  rodape: "Uso interno · Time Dados"
 };
 /*==CONFIG_END==*/
 
@@ -225,54 +227,30 @@ const CONFIG = {
 /*==FONTES_START==*/
 const FONTES = [
   {
-    "id": "teams",
-    "nome": "Microsoft Teams",
-    "subtitulo": "Aplicativos dos agentes no Teams",
-    "botoes": [
-      {
-        "nome": "AED002 — Vendas",
-        "descricao": "Aplicativo do agente no Teams",
-        "link": "https://teams.microsoft.com/l/app/3bb41da5-e8fd-4c80-9123-edc26718889a?source=store-item"
-      },
-      {
-        "nome": "AED005 — LEGIX",
-        "descricao": "Aplicativo do agente no Teams",
-        "link": "https://teams.microsoft.com/l/app/ea8d9d93-2c68-4399-a35c-4c13a1896140?source=cta-footer-app-link-preview&threadId=19%3A2e0417b4-97fc-4656-9619-74446221ace7_b17d3449-28c3-42c6-af9e-51429f45061a%40unq.gbl.spaces"
-      }
+    id:"teams", nome:"Microsoft Teams", subtitulo:"Aplicativos dos agentes no Teams",
+    botoes:[
+      { nome:"AED002 — Vendas", descricao:"Aplicativo do agente no Teams",
+        link:"https://teams.microsoft.com/l/app/3bb41da5-e8fd-4c80-9123-edc26718889a?source=store-item" },
+      { nome:"AED005 — LEGIX", descricao:"Aplicativo do agente no Teams",
+        link:"https://teams.microsoft.com/l/app/ea8d9d93-2c68-4399-a35c-4c13a1896140?source=cta-footer-app-link-preview&threadId=19%3A2e0417b4-97fc-4656-9619-74446221ace7_b17d3449-28c3-42c6-af9e-51429f45061a%40unq.gbl.spaces" }
     ]
   },
   {
-    "id": "databricks",
-    "nome": "Databricks",
-    "subtitulo": "Agentes na plataforma de dados",
-    "botoes": [
-      {
-        "nome": "AED002 — Vendas",
-        "descricao": "Agente no Databricks",
-        "link": "https://4196025774398434.4.gcp.databricks.com/genie/rooms/01f0ea30beb119bda2c3a7a6dfcf78bd?o=4196025774398434"
-      },
-      {
-        "nome": "AED005 — LEGIX",
-        "descricao": "Agente no Databricks",
-        "link": "https://4196025774398434.4.gcp.databricks.com/genie/rooms/01f14df1195e1811a3b7a46d09d512c8?o=4196025774398434"
-      }
+    id:"databricks", nome:"Databricks", subtitulo:"Agentes na plataforma de dados",
+    botoes:[
+      { nome:"AED002 — Vendas", descricao:"Agente no Databricks",
+        link:"https://4196025774398434.4.gcp.databricks.com/genie/rooms/01f0ea30beb119bda2c3a7a6dfcf78bd?o=4196025774398434" },
+      { nome:"AED005 — LEGIX", descricao:"Agente no Databricks",
+        link:"https://4196025774398434.4.gcp.databricks.com/genie/rooms/01f14df1195e1811a3b7a46d09d512c8?o=4196025774398434" }
     ]
   },
   {
-    "id": "copilot",
-    "nome": "Copilot",
-    "subtitulo": "Aplicativo e versão web",
-    "botoes": [
-      {
-        "nome": "Copilot Desktop",
-        "descricao": "Instalar pela Microsoft Store",
-        "link": "https://apps.microsoft.com/detail/9WZDNCRD29V9?hl=pt-br&gl=BR&ocid=pdpshare"
-      },
-      {
-        "nome": "Copilot Online",
-        "descricao": "Acesso pelo navegador",
-        "link": "https://copilot.com/"
-      }
+    id:"copilot", nome:"Copilot", subtitulo:"Aplicativo e versão web",
+    botoes:[
+      { nome:"Copilot Desktop", descricao:"Instalar pela Microsoft Store",
+        link:"https://apps.microsoft.com/detail/9WZDNCRD29V9?hl=pt-br&gl=BR&ocid=pdpshare" },
+      { nome:"Copilot Online", descricao:"Acesso pelo navegador",
+        link:"https://copilot.com/" }
     ]
   }
 ];
@@ -367,15 +345,22 @@ document.documentElement.setAttribute("data-theme","light");
             '<label>Rodapé<input id="ed-rodape" type="text"></label>'+
           '</section>'+
           '<section class="ed-sec"><div class="ed-sec-top"><h4>Grupos e links</h4><button class="ed-btn small ed-add-grupo">+ Grupo</button></div><div id="ed-grupos"></div></section>'+
-          '<section class="ed-sec"><details class="ed-gh"><summary>Publicar direto no GitHub (sem baixar)</summary>'+
-            '<p class="ed-note">Use um <b>token do GitHub</b> seu (fine-grained, permissão <b>Contents: Read and write</b> só neste repositório). Ele fica apenas neste navegador e <b>não</b> vai para o arquivo publicado.</p>'+
-            '<label>Owner<input id="gh-owner" type="text" placeholder="JOAOORUFINO"></label>'+
-            '<label>Repositório<input id="gh-repo" type="text" placeholder="treinamento-dados"></label>'+
-            '<div class="ed-row2"><label>Branch<input id="gh-branch" type="text" placeholder="main"></label><label>Arquivo<input id="gh-path" type="text" placeholder="index.html"></label></div>'+
-            '<label>Token<input id="gh-token" type="password" placeholder="github_pat_..." autocomplete="off"></label>'+
-            '<label class="ed-check"><input id="gh-remember" type="checkbox"> Lembrar token neste navegador</label>'+
-            '<button class="ed-btn primary gh-pub">Publicar no GitHub</button>'+
-          '</details></section>'+
+          '<section class="ed-sec"><h4>Publicar</h4>'+
+            '<p class="ed-note">A equipe publica com uma <b>senha</b> — sem precisar de token. Requer o servidor configurado uma vez (arquivo <b>worker.js</b> + instruções).</p>'+
+            '<label>Endereço do servidor<input id="gh-endpoint" type="text" placeholder="https://portal-dados.SEU-USUARIO.workers.dev"></label>'+
+            '<label>Senha da equipe<input id="gh-pass" type="password" placeholder="senha" autocomplete="off"></label>'+
+            '<label class="ed-check"><input id="gh-rememberpass" type="checkbox"> Lembrar senha neste navegador</label>'+
+            '<button class="ed-btn primary gh-pub-srv">Publicar</button>'+
+            '<details class="ed-adv"><summary>Avançado: publicar com meu token do GitHub</summary>'+
+              '<p class="ed-note">Token <b>fine-grained</b> com <b>Contents: Read and write</b> só neste repositório. Fica apenas neste navegador e <b>não</b> vai para o arquivo publicado.</p>'+
+              '<label>Owner<input id="gh-owner" type="text" placeholder="JOAOORUFINO"></label>'+
+              '<label>Repositório<input id="gh-repo" type="text" placeholder="treinamento-dados"></label>'+
+              '<div class="ed-row2"><label>Branch<input id="gh-branch" type="text" placeholder="main"></label><label>Arquivo<input id="gh-path" type="text" placeholder="index.html"></label></div>'+
+              '<label>Token<input id="gh-token" type="password" placeholder="github_pat_..." autocomplete="off"></label>'+
+              '<label class="ed-check"><input id="gh-remember" type="checkbox"> Lembrar token neste navegador</label>'+
+              '<button class="ed-btn gh-pub">Publicar com token</button>'+
+            '</details>'+
+          '</section>'+
         '</div>'+
         '<footer class="ed-foot"><span class="ed-status" id="ed-status"></span>'+
           '<div class="ed-foot-btns">'+
@@ -393,6 +378,31 @@ document.documentElement.setAttribute("data-theme","light");
     painel.querySelector("#ed-titulo").oninput = e=>{ STATE.config.titulo = e.target.value; apply(); };
     painel.querySelector("#ed-rodape").oninput = e=>{ STATE.config.rodape = e.target.value; apply(); };
     painel.querySelector(".gh-pub").onclick = publicarGithub;
+    painel.querySelector(".gh-pub-srv").onclick = publicarServidor;
+    const _saveSrv = ()=>{ try{
+      const c = ghCfg.get(); c.endpoint = (painel.querySelector("#gh-endpoint").value||"").trim(); ghCfg.set(c);
+      const rb = painel.querySelector("#gh-rememberpass").checked;
+      const pw = (painel.querySelector("#gh-pass").value||"").trim();
+      if(rb && pw){ localStorage.setItem("portalPubPass", pw); } else { localStorage.removeItem("portalPubPass"); }
+    }catch(e){} };
+    painel.querySelector("#gh-endpoint").onchange = _saveSrv;
+    painel.querySelector("#gh-pass").oninput = _saveSrv;
+    painel.querySelector("#gh-rememberpass").onchange = _saveSrv;
+    const _saveTok = ()=>{ try{
+      const rb = painel.querySelector("#gh-remember").checked;
+      const tk = (painel.querySelector("#gh-token").value||"").trim();
+      if(rb && tk){ localStorage.setItem("portalGhToken", tk); marcarStatus("Token guardado neste navegador."); }
+      else { localStorage.removeItem("portalGhToken"); }
+    }catch(e){} };
+    painel.querySelector("#gh-token").oninput = _saveTok;
+    painel.querySelector("#gh-remember").onchange = _saveTok;
+    const _saveCfg = ()=>{ ghCfg.set({
+      owner:(painel.querySelector("#gh-owner").value||"").trim(),
+      repo:(painel.querySelector("#gh-repo").value||"").trim(),
+      branch:(painel.querySelector("#gh-branch").value||"main").trim(),
+      path:(painel.querySelector("#gh-path").value||"index.html").trim()
+    }); };
+    ["#gh-owner","#gh-repo","#gh-branch","#gh-path"].forEach(s=>{ painel.querySelector(s).onchange = _saveCfg; });
   }
 
   function renderGrupos(){
@@ -444,6 +454,10 @@ document.documentElement.setAttribute("data-theme","light");
     let _tok = ""; try{ _tok = localStorage.getItem("portalGhToken") || ""; }catch(e){}
     painel.querySelector("#gh-token").value = _tok;
     painel.querySelector("#gh-remember").checked = !!_tok;
+    painel.querySelector("#gh-endpoint").value = _g.endpoint || "";
+    let _pw = ""; try{ _pw = localStorage.getItem("portalPubPass") || ""; }catch(e){}
+    painel.querySelector("#gh-pass").value = _pw;
+    painel.querySelector("#gh-rememberpass").checked = !!_pw;
     renderGrupos(); marcarStatus();
     painel.classList.add("open"); aberto = true;
   }
@@ -497,6 +511,25 @@ document.documentElement.setAttribute("data-theme","light");
     get(){ try{ return JSON.parse(localStorage.getItem("portalGh")||"{}"); }catch(e){ return {}; } },
     set(o){ try{ localStorage.setItem("portalGh", JSON.stringify(o)); }catch(e){} }
   };
+
+  async function publicarServidor(){
+    const endpoint = (painel.querySelector("#gh-endpoint").value||"").trim();
+    const password = (painel.querySelector("#gh-pass").value||"").trim();
+    const c = ghCfg.get(); c.endpoint = endpoint; ghCfg.set(c);
+    try{ if(painel.querySelector("#gh-rememberpass").checked && password){ localStorage.setItem("portalPubPass", password); } else { localStorage.removeItem("portalPubPass"); } }catch(e){}
+    if(!endpoint || !password){ marcarStatus("Preencha o endereço do servidor e a senha."); return; }
+    marcarStatus("Publicando…");
+    let out;
+    try{ out = await gerarHTML(); }
+    catch(e){ marcarStatus("Erro ao gerar HTML (abra pelo site publicado): " + e.message); return; }
+    try{
+      const r = await fetch(endpoint, { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ password, html: out }) });
+      let j = {}; try{ j = await r.json(); }catch(_){}
+      if(r.ok && j.ok){ marcarStatus("✓ Publicado! O site atualiza em ~1 min."); }
+      else if(r.status === 401){ marcarStatus("Senha incorreta."); }
+      else { marcarStatus("Falha ao publicar: " + (j.error || ("HTTP " + r.status))); }
+    }catch(e){ marcarStatus("Falha de rede (confira o endereço do servidor): " + e.message); }
+  }
 
   async function publicarGithub(){
     const owner  = (painel.querySelector("#gh-owner").value  || "").trim();
