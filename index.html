@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Treinamento - P&D | WAP</title>
+<title>Treinamento - Dados | WAP</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%230057B8'/><path d='M18 34l14 32 18-24 18 24 14-32' fill='none' stroke='white' stroke-width='9' stroke-linejoin='round' stroke-linecap='round'/></svg>">
 <style>
 /* ============================================================
@@ -142,6 +142,42 @@ footer{
 @media (prefers-reduced-motion: reduce){
   *{transition:none !important; animation:none !important}
 }
+
+/* ===================== PAINEL DE EDIÇÃO ===================== */
+#edit-drawer{position:fixed;inset:0;z-index:9999;display:none;font-family:inherit}
+#edit-drawer.open{display:block}
+#edit-drawer .ed-backdrop{position:absolute;inset:0;background:rgba(4,16,42,.45)}
+#edit-drawer .ed-panel{position:absolute;top:0;right:0;height:100%;width:min(480px,96vw);background:var(--surface);
+  box-shadow:var(--shadow-md);display:flex;flex-direction:column;transform:translateX(102%);transition:transform .25s ease}
+#edit-drawer.open .ed-panel{transform:none}
+.ed-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid var(--border)}
+.ed-head strong{font-size:16px;color:var(--text)}
+.ed-x{border:none;background:transparent;font-size:24px;line-height:1;cursor:pointer;color:var(--text-soft);width:34px;height:34px;border-radius:8px}
+.ed-x:hover{background:var(--bg);color:var(--text)}
+.ed-body{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:22px}
+.ed-sec>h4,.ed-sec-top h4{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-soft);margin:0 0 10px}
+.ed-sec-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.ed-sec-top h4{margin:0}
+.ed-sec label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--text-soft);margin-bottom:10px}
+#edit-drawer input{font:inherit;font-size:14px;color:var(--text);padding:9px 11px;border:1px solid var(--border);border-radius:9px;background:var(--surface);width:100%}
+#edit-drawer input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 3px var(--ring)}
+.ed-grupo{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:12px;background:var(--bg)}
+.ed-grupo-head{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+.ed-grupo-head .g-nome{font-weight:600}
+.ed-link{display:grid;grid-template-columns:1fr 1fr 34px;gap:6px;margin:10px 0}
+.ed-link .b-nome{grid-column:1/2}.ed-link .b-desc{grid-column:2/3}
+.ed-link .b-del{grid-column:3/4;grid-row:1/3}.ed-link .b-link{grid-column:1/3}
+.ed-icn{border:none;background:transparent;cursor:pointer;color:var(--text-soft);font-size:18px;height:36px;border-radius:8px}
+.ed-icn:hover{background:#fff;color:var(--databricks)}
+.ed-btn{font:inherit;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);padding:8px 12px;border-radius:9px}
+.ed-btn:hover{border-color:var(--brand)}
+.ed-btn.small{padding:6px 10px;font-size:12px}
+.ed-btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.ed-btn.primary:hover{background:var(--brand-dark)}
+.ed-btn.ghost{color:var(--text-soft)}
+.ed-foot{border-top:1px solid var(--border);padding:12px 18px;display:flex;flex-direction:column;gap:8px}
+.ed-status{font-size:11px;color:var(--text-soft);min-height:14px}
+.ed-foot-btns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -167,10 +203,12 @@ footer{
 /* ==================================================================
    1) TEXTOS DA PÁGINA
    ================================================================== */
+/*==CONFIG_START==*/
 const CONFIG = {
-  titulo: "Treinamento - P&D",   // aparece só na aba do navegador
-  rodape: "Uso interno · Time P&D"
+  titulo: "Treinamento - Dados",   // aparece só na aba do navegador
+  rodape: "Uso interno · Time Dados"
 };
+/*==CONFIG_END==*/
 
 /* ==================================================================
    2) AS FONTES (blocos) E SEUS BOTÕES
@@ -178,6 +216,7 @@ const CONFIG = {
    Para adicionar um botão, copie uma linha e troque nome/descricao/link.
    Link vazio ("") = botão aparece como "link pendente".
    ================================================================== */
+/*==FONTES_START==*/
 const FONTES = [
   {
     id:"teams", nome:"Microsoft Teams", subtitulo:"Aplicativos dos agentes no Teams",
@@ -207,6 +246,7 @@ const FONTES = [
     ]
   }
 ];
+/*==FONTES_END==*/
 
 /* ==================================================================
    3) MOTOR — não precisa mexer daqui pra baixo
@@ -214,43 +254,192 @@ const FONTES = [
 const $ = s => document.querySelector(s);
 
 const ICONES = {
+  _default:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/></svg>`,
   teams:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.8-.8L3 21l1.9-5a8.4 8.4 0 0 1 3.3-11.4 8.9 8.9 0 0 1 11.3 3.1 8.3 8.3 0 0 1 1.5 3.8Z"/></svg>`,
   databricks:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.5 12 3l9 4.5-9 4.5-9-4.5Z"/><path d="m3 12 9 4.5L21 12"/><path d="m3 16.5 9 4.5 9-4.5"/></svg>`,
   copilot:`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.1 4.9L19 10l-4.9 2.1L12 17l-2.1-4.9L5 10l4.9-2.1L12 3Z"/><path d="M18.5 16.5 19.5 19l2.5 1-2.5 1-1 2.5-1-2.5L15 20l2.5-1 1-2.5Z" opacity=".55"/></svg>`
 };
 const seta = `<svg class="seta" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M9 7h8v8"/></svg>`;
 
-$("#cfg-rodape").textContent = CONFIG.rodape;
-document.title = CONFIG.titulo + " | WAP";
+/* ---- estado editável: baseline do arquivo + rascunho local (localStorage) ---- */
+let STATE = { config: JSON.parse(JSON.stringify(CONFIG)), fontes: JSON.parse(JSON.stringify(FONTES)) };
+try { const _d = localStorage.getItem("portalDadosDraft"); if(_d){ const _p = JSON.parse(_d); if(_p && _p.config && Array.isArray(_p.fontes)) STATE = _p; } } catch(_e){}
+
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
 function montarCard(b, fonteId){
   const ativo = b.link && b.link.trim() !== "" && b.link !== "#";
-  const estilo = `--cor:var(--${fonteId})`;
+  const estilo = `--cor:var(--${fonteId}, var(--brand))`;
   const corpo =
-    `<strong>${b.nome}</strong>` +
-    (b.descricao ? `<span>${b.descricao}</span>` : "") +
+    `<strong>${esc(b.nome)}</strong>` +
+    (b.descricao ? `<span>${esc(b.descricao)}</span>` : "") +
     (ativo ? "" : `<span class="tag">link pendente</span>`);
-  const interno = `<div class="card-icon">${ICONES[fonteId]}</div><div class="card-body">${corpo}</div>${seta}`;
+  const icone = ICONES[fonteId] || ICONES._default;
+  const interno = `<div class="card-icon">${icone}</div><div class="card-body">${corpo}</div>${seta}`;
   return ativo
     ? `<a class="card" style="${estilo}" href="${b.link}" target="_blank" rel="noopener noreferrer">${interno}</a>`
     : `<div class="card pendente" style="${estilo}" aria-disabled="true">${interno}</div>`;
 }
 
-$("#content").innerHTML = FONTES.map(f => {
-  const ativos = f.botoes.filter(b => b.link && b.link.trim() !== "").length;
-  return `
+function render(){
+  $("#cfg-rodape").textContent = STATE.config.rodape || "";
+  document.title = (STATE.config.titulo || "") + " | WAP";
+  $("#content").innerHTML = STATE.fontes.map(f => {
+    const ativos = f.botoes.filter(b => b.link && b.link.trim() !== "").length;
+    const icone = ICONES[f.id] || ICONES._default;
+    return `
   <section class="bloco" data-fonte="${f.id}">
     <div class="bloco-head">
-      <div class="bloco-logo">${ICONES[f.id]}</div>
-      <div><h2>${f.nome}</h2><p>${f.subtitulo || ""}</p></div>
+      <div class="bloco-logo">${icone}</div>
+      <div><h2>${esc(f.nome)}</h2><p>${esc(f.subtitulo || "")}</p></div>
       <span class="contador">${ativos} de ${f.botoes.length} ativos</span>
     </div>
     <div class="grid">${f.botoes.map(b => montarCard(b, f.id)).join("")}</div>
   </section>`;
-}).join("");
+  }).join("");
+}
+render();
 
 /* tema fixo: claro */
 document.documentElement.setAttribute("data-theme","light");
+
+/* ===================== PAINEL DE EDIÇÃO =====================
+   Atalho: Ctrl/Cmd + Shift + E  (ou abra a URL com #edit)
+   Edita textos/grupos/links ao vivo, guarda rascunho neste navegador
+   e gera o index.html atualizado (botão "Baixar") para subir no GitHub,
+   fazendo a mudança valer para TODOS os visitantes.
+   ========================================================== */
+(function(){
+  const LS_KEY = "portalDadosDraft";
+  let painel = null, aberto = false;
+
+  const attr = s => String(s==null?"":s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const slug = s => (String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"")) || "grupo";
+  const saveDraft = () => { try{ localStorage.setItem(LS_KEY, JSON.stringify(STATE)); }catch(e){} };
+
+  function marcarStatus(txt){ const s = painel && painel.querySelector("#ed-status"); if(s) s.textContent = txt || "Rascunho salvo neste navegador • baixe o HTML e suba no GitHub p/ todos verem."; }
+
+  /* aplica no preview (sem reconstruir o formulário, preserva o foco) */
+  function apply(){ render(); saveDraft(); marcarStatus(); }
+  /* aplica + reconstrói a lista do painel (para add/remover) */
+  function sync(){ STATE.fontes.forEach(g=>{ if(!g.id) g.id = slug(g.nome); }); render(); saveDraft(); renderGrupos(); marcarStatus(); }
+
+  function construir(){
+    painel = document.createElement("div");
+    painel.id = "edit-drawer";
+    painel.innerHTML =
+      '<div class="ed-backdrop"></div>'+
+      '<aside class="ed-panel" role="dialog" aria-label="Modo edicao">'+
+        '<header class="ed-head"><strong>Modo edição</strong><button class="ed-x" title="Fechar (Esc)">×</button></header>'+
+        '<div class="ed-body">'+
+          '<section class="ed-sec"><h4>Textos da página</h4>'+
+            '<label>Título (aba do navegador)<input id="ed-titulo" type="text"></label>'+
+            '<label>Rodapé<input id="ed-rodape" type="text"></label>'+
+          '</section>'+
+          '<section class="ed-sec"><div class="ed-sec-top"><h4>Grupos e links</h4><button class="ed-btn small ed-add-grupo">+ Grupo</button></div><div id="ed-grupos"></div></section>'+
+        '</div>'+
+        '<footer class="ed-foot"><span class="ed-status" id="ed-status"></span>'+
+          '<div class="ed-foot-btns">'+
+            '<button class="ed-btn ghost ed-descartar">Descartar rascunho</button>'+
+            '<button class="ed-btn primary ed-baixar">Baixar index.html</button>'+
+          '</div>'+
+        '</footer>'+
+      '</aside>';
+    document.body.appendChild(painel);
+    painel.querySelector(".ed-x").onclick = fechar;
+    painel.querySelector(".ed-backdrop").onclick = fechar;
+    painel.querySelector(".ed-descartar").onclick = descartar;
+    painel.querySelector(".ed-baixar").onclick = baixar;
+    painel.querySelector(".ed-add-grupo").onclick = ()=>{ STATE.fontes.push({ id:slug("grupo-"+(STATE.fontes.length+1)), nome:"Novo grupo", subtitulo:"", botoes:[] }); sync(); };
+    painel.querySelector("#ed-titulo").oninput = e=>{ STATE.config.titulo = e.target.value; apply(); };
+    painel.querySelector("#ed-rodape").oninput = e=>{ STATE.config.rodape = e.target.value; apply(); };
+  }
+
+  function renderGrupos(){
+    const box = painel.querySelector("#ed-grupos");
+    box.innerHTML = "";
+    STATE.fontes.forEach((g, gi)=>{
+      const el = document.createElement("div");
+      el.className = "ed-grupo";
+      el.innerHTML =
+        '<div class="ed-grupo-head">'+
+          '<input class="g-nome" type="text" value="'+attr(g.nome)+'" placeholder="Nome do grupo">'+
+          '<button class="ed-icn g-del" title="Remover grupo">🗑</button>'+
+        '</div>'+
+        '<input class="g-sub" type="text" value="'+attr(g.subtitulo||"")+'" placeholder="Subtítulo (opcional)">'+
+        '<div class="g-botoes"></div>'+
+        '<button class="ed-btn small g-add">+ Link</button>';
+      const bbox = el.querySelector(".g-botoes");
+      (g.botoes||[]).forEach((b, bi)=>{
+        const br = document.createElement("div");
+        br.className = "ed-link";
+        br.innerHTML =
+          '<input class="b-nome" type="text" value="'+attr(b.nome)+'" placeholder="Nome do botão">'+
+          '<input class="b-desc" type="text" value="'+attr(b.descricao||"")+'" placeholder="Descrição">'+
+          '<button class="ed-icn b-del" title="Remover link">×</button>'+
+          '<input class="b-link" type="text" value="'+attr(b.link||"")+'" placeholder="https://...">';
+        br.querySelector(".b-nome").oninput = e=>{ b.nome = e.target.value; apply(); };
+        br.querySelector(".b-desc").oninput = e=>{ b.descricao = e.target.value; apply(); };
+        br.querySelector(".b-link").oninput = e=>{ b.link = e.target.value; apply(); };
+        br.querySelector(".b-del").onclick = ()=>{ g.botoes.splice(bi,1); sync(); };
+        bbox.appendChild(br);
+      });
+      el.querySelector(".g-nome").oninput = e=>{ g.nome = e.target.value; apply(); };
+      el.querySelector(".g-sub").oninput = e=>{ g.subtitulo = e.target.value; apply(); };
+      el.querySelector(".g-del").onclick = ()=>{ if(confirm('Remover o grupo "'+(g.nome||"")+'"?')){ STATE.fontes.splice(gi,1); sync(); } };
+      el.querySelector(".g-add").onclick = ()=>{ (g.botoes = g.botoes || []).push({ nome:"Novo link", descricao:"", link:"" }); sync(); };
+      box.appendChild(el);
+    });
+  }
+
+  function abrir(){
+    if(!painel) construir();
+    painel.querySelector("#ed-titulo").value = STATE.config.titulo || "";
+    painel.querySelector("#ed-rodape").value = STATE.config.rodape || "";
+    renderGrupos(); marcarStatus();
+    painel.classList.add("open"); aberto = true;
+  }
+  function fechar(){ if(painel) painel.classList.remove("open"); aberto = false; }
+  function toggle(){ aberto ? fechar() : abrir(); }
+
+  function descartar(){
+    if(!confirm("Descartar o rascunho local e voltar ao conteúdo publicado?")) return;
+    try{ localStorage.removeItem(LS_KEY); }catch(e){}
+    STATE = { config: JSON.parse(JSON.stringify(CONFIG)), fontes: JSON.parse(JSON.stringify(FONTES)) };
+    render(); abrir(); marcarStatus("Rascunho descartado.");
+  }
+
+  async function baixar(){
+    STATE.fontes.forEach(g=>{ if(!g.id) g.id = slug(g.nome); });
+    const cfg = "const CONFIG = " + JSON.stringify(STATE.config, null, 2) + ";";
+    const fon = "const FONTES = " + JSON.stringify(STATE.fontes, null, 2) + ";";
+    let src;
+    try{
+      src = await (await fetch(location.href, {cache:"no-store"})).text();
+      if(!/\/\*==CONFIG_START==\*\//.test(src) || !/\/\*==FONTES_START==\*\//.test(src)) throw new Error("sem marcadores");
+    }catch(e){
+      try{ await navigator.clipboard.writeText(cfg + "\n\n" + fon); }catch(_){}
+      alert("Não consegui ler o HTML de origem automaticamente (isso funciona com a página servida pelo GitHub Pages).\n\nCopiei os blocos CONFIG e FONTES para a área de transferência — cole-os no index.html entre os marcadores correspondentes.");
+      return;
+    }
+    const out = src
+      .replace(/\/\*==CONFIG_START==\*\/[\s\S]*?\/\*==CONFIG_END==\*\//, ()=>"/*==CONFIG_START==*/\n"+cfg+"\n/*==CONFIG_END==*/")
+      .replace(/\/\*==FONTES_START==\*\/[\s\S]*?\/\*==FONTES_END==\*\//, ()=>"/*==FONTES_START==*/\n"+fon+"\n/*==FONTES_END==*/")
+      .replace(/<title>[\s\S]*?<\/title>/, ()=>"<title>"+ attr(STATE.config.titulo||"") +" | WAP</title>");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([out], {type:"text/html;charset=utf-8"}));
+    a.download = "index.html";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+    marcarStatus("index.html gerado • suba no GitHub p/ publicar a todos.");
+  }
+
+  document.addEventListener("keydown", e=>{
+    if((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "E" || e.key === "e")){ e.preventDefault(); toggle(); }
+    else if(e.key === "Escape" && aberto){ fechar(); }
+  });
+  if(location.hash === "#edit") window.addEventListener("load", abrir);
+})();
 </script>
 </body>
 </html>
