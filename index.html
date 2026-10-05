@@ -178,6 +178,12 @@ footer{
 .ed-foot{border-top:1px solid var(--border);padding:12px 18px;display:flex;flex-direction:column;gap:8px}
 .ed-status{font-size:11px;color:var(--text-soft);min-height:14px}
 .ed-foot-btns{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.ed-gh summary{cursor:pointer;font-size:12px;font-weight:600;color:var(--brand);padding:6px 0}
+.ed-note{font-size:11px;color:var(--text-soft);line-height:1.45;margin:6px 0 10px}
+.ed-row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.ed-check{flex-direction:row!important;align-items:center;gap:8px!important;font-size:12px!important;color:var(--text)!important;margin:10px 0}
+.ed-check input{width:auto!important}
+.ed-gh .ed-btn{margin-top:4px}
 </style>
 </head>
 <body>
@@ -337,6 +343,15 @@ document.documentElement.setAttribute("data-theme","light");
             '<label>Rodapé<input id="ed-rodape" type="text"></label>'+
           '</section>'+
           '<section class="ed-sec"><div class="ed-sec-top"><h4>Grupos e links</h4><button class="ed-btn small ed-add-grupo">+ Grupo</button></div><div id="ed-grupos"></div></section>'+
+          '<section class="ed-sec"><details class="ed-gh"><summary>Publicar direto no GitHub (sem baixar)</summary>'+
+            '<p class="ed-note">Use um <b>token do GitHub</b> seu (fine-grained, permissão <b>Contents: Read and write</b> só neste repositório). Ele fica apenas neste navegador e <b>não</b> vai para o arquivo publicado.</p>'+
+            '<label>Owner<input id="gh-owner" type="text" placeholder="JOAOORUFINO"></label>'+
+            '<label>Repositório<input id="gh-repo" type="text" placeholder="treinamento-dados"></label>'+
+            '<div class="ed-row2"><label>Branch<input id="gh-branch" type="text" placeholder="main"></label><label>Arquivo<input id="gh-path" type="text" placeholder="index.html"></label></div>'+
+            '<label>Token<input id="gh-token" type="password" placeholder="github_pat_..." autocomplete="off"></label>'+
+            '<label class="ed-check"><input id="gh-remember" type="checkbox"> Lembrar token neste navegador</label>'+
+            '<button class="ed-btn primary gh-pub">Publicar no GitHub</button>'+
+          '</details></section>'+
         '</div>'+
         '<footer class="ed-foot"><span class="ed-status" id="ed-status"></span>'+
           '<div class="ed-foot-btns">'+
@@ -353,6 +368,7 @@ document.documentElement.setAttribute("data-theme","light");
     painel.querySelector(".ed-add-grupo").onclick = ()=>{ STATE.fontes.push({ id:slug("grupo-"+(STATE.fontes.length+1)), nome:"Novo grupo", subtitulo:"", botoes:[] }); sync(); };
     painel.querySelector("#ed-titulo").oninput = e=>{ STATE.config.titulo = e.target.value; apply(); };
     painel.querySelector("#ed-rodape").oninput = e=>{ STATE.config.rodape = e.target.value; apply(); };
+    painel.querySelector(".gh-pub").onclick = publicarGithub;
   }
 
   function renderGrupos(){
@@ -396,6 +412,14 @@ document.documentElement.setAttribute("data-theme","light");
     if(!painel) construir();
     painel.querySelector("#ed-titulo").value = STATE.config.titulo || "";
     painel.querySelector("#ed-rodape").value = STATE.config.rodape || "";
+    const _g = ghCfg.get();
+    painel.querySelector("#gh-owner").value  = _g.owner  || "JOAOORUFINO";
+    painel.querySelector("#gh-repo").value   = _g.repo   || "treinamento-dados";
+    painel.querySelector("#gh-branch").value = _g.branch || "main";
+    painel.querySelector("#gh-path").value   = _g.path   || "index.html";
+    let _tok = ""; try{ _tok = localStorage.getItem("portalGhToken") || ""; }catch(e){}
+    painel.querySelector("#gh-token").value = _tok;
+    painel.querySelector("#gh-remember").checked = !!_tok;
     renderGrupos(); marcarStatus();
     painel.classList.add("open"); aberto = true;
   }
@@ -409,29 +433,78 @@ document.documentElement.setAttribute("data-theme","light");
     render(); abrir(); marcarStatus("Rascunho descartado.");
   }
 
-  async function baixar(){
+  async function gerarHTML(){
     STATE.fontes.forEach(g=>{ if(!g.id) g.id = slug(g.nome); });
     const cfg = "const CONFIG = " + JSON.stringify(STATE.config, null, 2) + ";";
     const fon = "const FONTES = " + JSON.stringify(STATE.fontes, null, 2) + ";";
-    let src;
-    try{
-      src = await (await fetch(location.href, {cache:"no-store"})).text();
-      if(!/\/\*==CONFIG_START==\*\//.test(src) || !/\/\*==FONTES_START==\*\//.test(src)) throw new Error("sem marcadores");
-    }catch(e){
-      try{ await navigator.clipboard.writeText(cfg + "\n\n" + fon); }catch(_){}
-      alert("Não consegui ler o HTML de origem automaticamente (isso funciona com a página servida pelo GitHub Pages).\n\nCopiei os blocos CONFIG e FONTES para a área de transferência — cole-os no index.html entre os marcadores correspondentes.");
-      return;
-    }
-    const out = src
+    const src = await (await fetch(location.href, {cache:"no-store"})).text();
+    if(!/\/\*==CONFIG_START==\*\//.test(src) || !/\/\*==FONTES_START==\*\//.test(src)) throw new Error("marcadores ausentes na origem");
+    return src
       .replace(/\/\*==CONFIG_START==\*\/[\s\S]*?\/\*==CONFIG_END==\*\//, ()=>"/*==CONFIG_START==*/\n"+cfg+"\n/*==CONFIG_END==*/")
       .replace(/\/\*==FONTES_START==\*\/[\s\S]*?\/\*==FONTES_END==\*\//, ()=>"/*==FONTES_START==*/\n"+fon+"\n/*==FONTES_END==*/")
       .replace(/<title>[\s\S]*?<\/title>/, ()=>"<title>"+ attr(STATE.config.titulo||"") +" | WAP</title>");
+  }
+
+  async function baixar(){
+    let out;
+    try{ out = await gerarHTML(); }
+    catch(e){
+      const cfg = "const CONFIG = " + JSON.stringify(STATE.config, null, 2) + ";";
+      const fon = "const FONTES = " + JSON.stringify(STATE.fontes, null, 2) + ";";
+      try{ await navigator.clipboard.writeText(cfg + "\n\n" + fon); }catch(_){}
+      alert("Não consegui ler o HTML de origem automaticamente (funciona na página servida pelo GitHub Pages).\n\nCopiei os blocos CONFIG e FONTES para a área de transferência.");
+      return;
+    }
     const a = document.createElement("a");
     a.href = URL.createObjectURL(new Blob([out], {type:"text/html;charset=utf-8"}));
     a.download = "index.html";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
     marcarStatus("index.html gerado • suba no GitHub p/ publicar a todos.");
+  }
+
+  function b64utf8(str){
+    const bytes = new TextEncoder().encode(str);
+    let bin = ""; const CH = 0x8000;
+    for(let i=0;i<bytes.length;i+=CH){ bin += String.fromCharCode.apply(null, bytes.subarray(i, i+CH)); }
+    return btoa(bin);
+  }
+  const ghCfg = {
+    get(){ try{ return JSON.parse(localStorage.getItem("portalGh")||"{}"); }catch(e){ return {}; } },
+    set(o){ try{ localStorage.setItem("portalGh", JSON.stringify(o)); }catch(e){} }
+  };
+
+  async function publicarGithub(){
+    const owner  = (painel.querySelector("#gh-owner").value  || "").trim();
+    const repo   = (painel.querySelector("#gh-repo").value   || "").trim();
+    const branch = (painel.querySelector("#gh-branch").value || "main").trim();
+    const path   = (painel.querySelector("#gh-path").value   || "index.html").trim();
+    const token  = (painel.querySelector("#gh-token").value  || "").trim();
+    const lembrar= painel.querySelector("#gh-remember").checked;
+    ghCfg.set({owner, repo, branch, path});
+    try{ if(lembrar && token) localStorage.setItem("portalGhToken", token); else localStorage.removeItem("portalGhToken"); }catch(e){}
+    if(!owner || !repo || !token){ marcarStatus("Preencha owner, repositório e token do GitHub."); return; }
+    marcarStatus("Publicando no GitHub…");
+    let out;
+    try{ out = await gerarHTML(); }
+    catch(e){ marcarStatus("Erro ao gerar HTML (abra pelo site do GitHub Pages): " + e.message); return; }
+    const api = "https://api.github.com/repos/" + owner + "/" + repo + "/contents/" + path;
+    const headers = { "Authorization": "Bearer " + token, "Accept": "application/vnd.github+json" };
+    try{
+      let sha;
+      const g = await fetch(api + "?ref=" + encodeURIComponent(branch), { headers });
+      if(g.status === 200){ sha = (await g.json()).sha; }
+      else if(g.status === 401){ throw new Error("token inválido (401)"); }
+      else if(g.status !== 404){ throw new Error("GET " + g.status); }
+      const put = await fetch(api, {
+        method: "PUT", headers,
+        body: JSON.stringify({ message: "Atualiza " + path + " via painel de edição", content: b64utf8(out), branch, sha })
+      });
+      if(!put.ok){ const t = await put.text(); throw new Error("PUT " + put.status + " — " + t.slice(0,140)); }
+      marcarStatus("✓ Publicado no GitHub! O Pages atualiza o site em ~1 min.");
+    }catch(e){
+      marcarStatus("Falha ao publicar: " + e.message);
+    }
   }
 
   document.addEventListener("keydown", e=>{
